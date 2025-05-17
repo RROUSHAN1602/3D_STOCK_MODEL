@@ -1,6 +1,7 @@
-streamlit
-pandas
-numpy
-pyotp
-plotly
-smartapi-python
+ streamlit
+ pandas
+ numpy
+ pyotp
+ plotly
+ smartapi-python
++logzero
