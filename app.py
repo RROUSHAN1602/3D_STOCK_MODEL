@@ -7,7 +7,7 @@ from SmartApi.smartConnect import SmartConnect
 import plotly.graph_objects as go
 
 # Config
-st.set_page_config(page_title="📈 3D Money Flow Dashboard", layout="wide")
+st.set_page_config(page_title="📈 TRIYAM", layout="wide")
 st.title("📊 Advanced Stock Dashboard – Volume | Price | Money Flow")
 
 # Angel One Login
