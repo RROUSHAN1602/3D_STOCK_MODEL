@@ -25,7 +25,7 @@ except Exception as e:
     st.error(f"❌ Login Failed: {e}")
     st.stop()
 
-# Stock list (add tokens as needed)
+# ------------------- STOCK LIST -------------------
 stock_list = {
     "RELIANCE": "2885",
     "POLYCAB": "9590",
@@ -106,33 +106,35 @@ stock_list = {
      "SWANENERGY-EQ":"27095","Nifty50":"99926046"
 }
 
-# UI
+# ------------------- UI SELECTION -------------------
 stock_name = st.selectbox("📌 Select Stock", list(stock_list.keys()))
-interval = st.selectbox("🕒 Select Interval", ["ONE_MINUTE","FIVE_MINUTE","FIFTEEN_MINUTE","THIRTY_MINUTE","ONE_HOUR","ONE_DAY"])
+interval = st.selectbox("🕒 Select Interval", [
+    "ONE_MINUTE", "FIVE_MINUTE", "FIFTEEN_MINUTE", "THIRTY_MINUTE", "ONE_HOUR", "ONE_DAY"
+])
 from_date = st.date_input("📆 From Date", dt.date.today() - dt.timedelta(days=5))
 to_date = st.date_input("📆 To Date", dt.date.today())
+
 if from_date > to_date:
     st.warning("⚠️ 'From Date' cannot be after 'To Date'")
     st.stop()
 
-# Fetch OHLC
+# ------------------- FETCH OHLC DATA -------------------
 def fetch_ohlc_data(symbol, interval, from_date, to_date):
     try:
         params = {
-            "exchange":"NSE",
-            "symboltoken":stock_list[symbol],
-            "interval":interval,
-            "fromdate":f"{from_date} 09:15",
-            "todate":f"{to_date} 15:30"
+            "exchange": "NSE",
+            "symboltoken": stock_list[symbol],
+            "interval": interval,
+            "fromdate": from_date.strftime('%Y-%m-%d %H:%M'),
+            "todate": to_date.strftime('%Y-%m-%d %H:%M')
         }
         response = obj.getCandleData(params)
-        if not response.get("status") or "data" not in response:
+        if response['status'] != True or 'data' not in response:
             return None
-        df = pd.DataFrame(response["data"], columns=["timestamp","open","high","low","close","volume"])
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-        for col in ["open","high","low","close","volume"]:
-            df[col] = df[col].astype(float)
-        return df
+        data = pd.DataFrame(response['data'], columns=["timestamp", "open", "high", "low", "close", "volume"])
+        data['timestamp'] = pd.to_datetime(data['timestamp'])
+        data[['open', 'high', 'low', 'close', 'volume']] = data[['open', 'high', 'low', 'close', 'volume']].astype(float)
+        return data
     except Exception as e:
         st.error(f"Data fetch failed: {e}")
         return None
@@ -142,43 +144,63 @@ if df is None or df.empty:
     st.warning("⚠️ No data available.")
     st.stop()
 
-# CMF Calculation
+# ------------------- CMF CALCULATION -------------------
 def calculate_cmf(df, period=20):
-    mf = ((df["close"] - df["low"]) - (df["high"] - df["close"])) / (df["high"] - df["low"])
+    mf = ((df['close'] - df['low']) - (df['high'] - df['close'])) / (df['high'] - df['low'])
     mf = mf.replace([np.inf, -np.inf], 0).fillna(0)
-    mf_vol = mf * df["volume"]
-    df["cmf"] = mf_vol.rolling(window=period).sum() / df["volume"].rolling(window=period).sum()
-    return df.dropna()
+    mf_volume = mf * df['volume']
+    df['cmf'] = mf_volume.rolling(window=period).sum() / df['volume'].rolling(window=period).sum()
+    df = df.dropna()
+    return df
 
 df = calculate_cmf(df)
 
-# Divergence
-df["divergence"] = df["cmf"].diff() * df["close"].diff() < 0
+# ------------------- DIVERGENCE DETECTION -------------------
+df['cmf_diff'] = df['cmf'].diff()
+df['price_diff'] = df['close'].diff()
+df['divergence'] = (df['cmf_diff'] * df['price_diff']) < 0
 
-# Plots
-def plot_3d(df):
+# ------------------- PLOT FUNCTIONS -------------------
+def plot_3d_animated(df):
     fig = go.Figure()
-    fig.add_trace(go.Scatter3d(x=df["volume"], y=df["close"], z=df["cmf"],
-                               mode="markers+lines",
-                               marker=dict(size=4, color=df["cmf"], colorscale="Viridis")))
-    fig.update_layout(scene=dict(xaxis_title="Volume", yaxis_title="Price", zaxis_title="CMF"),
-                      margin=dict(l=0, r=0, b=0, t=30), height=700)
+    fig.add_trace(go.Scatter3d(
+        x=df['volume'],
+        y=df['close'],
+        z=df['cmf'],
+        mode='lines+markers',
+        marker=dict(size=5, color=df['cmf'], colorscale='Viridis', opacity=0.9),
+        line=dict(width=2, color='blue'),
+        text=df['timestamp'].astype(str)
+    ))
+    fig.update_layout(scene=dict(
+        xaxis_title="Volume",
+        yaxis_title="Price",
+        zaxis_title="Money Flow (CMF)"
+    ), height=750, margin=dict(l=0, r=0, b=0, t=30))
     return fig
 
-def plot_2d(x, y, title):
-    fig = go.Figure(go.Scatter(x=x, y=y, mode="lines+markers"))
-    fig.update_layout(title=title, xaxis_title=x.name, yaxis_title=y.name)
+def plot_2d(df, x_col, y_col, highlight_div=False):
+    color = np.where(df['divergence'], 'red', 'blue') if highlight_div else 'blue'
+    fig = go.Figure(data=go.Scatter(x=df[x_col], y=df[y_col],
+                                    mode='markers+lines',
+                                    marker=dict(color=color)))
+    fig.update_layout(xaxis_title=x_col.capitalize(), yaxis_title=y_col.capitalize())
     return fig
 
-tab1, tab2, tab3, tab4 = st.tabs(["3D Chart","Price vs CMF","Volume vs CMF","Divergence"])
+# ------------------- STREAMLIT TABS -------------------
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📈 3D Chart", "📉 Price vs CMF", "📊 Volume vs CMF", "🚨 Divergence Alerts"
+])
+
 with tab1:
-    st.plotly_chart(plot_3d(df), use_container_width=True)
+    st.plotly_chart(plot_3d_animated(df), use_container_width=True)
+
 with tab2:
-    st.plotly_chart(plot_2d(df["timestamp"], df["close"], "Price vs CMF"), use_container_width=True)
+    st.plotly_chart(plot_2d(df, 'close', 'cmf'), use_container_width=True)
+
 with tab3:
-    st.plotly_chart(plot_2d(df["timestamp"], df["volume"], "Volume vs CMF"), use_container_width=True)
+    st.plotly_chart(plot_2d(df, 'volume', 'cmf'), use_container_width=True)
+
 with tab4:
-    st.write("🔴 Divergence points")
-    colors = np.where(df["divergence"], "red", "blue")
-    fig = go.Figure(go.Scatter(x=df["timestamp"], y=df["close"], mode="markers", marker=dict(color=colors)))
-    st.plotly_chart(fig, use_container_width=True)
+    st.write("🔴 Red points show divergence (Price & CMF moving opposite).")
+    st.plotly_chart(plot_2d(df, 'timestamp', 'close', highlight_div=True), use_container_width=True)
