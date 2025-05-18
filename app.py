@@ -106,6 +106,7 @@ stock_list = {
      "SWANENERGY-EQ":"27095","Nifty50":"99926046"
 }
 
+
 # ------------------- UI SELECTION -------------------
 stock_name = st.selectbox("📌 Select Stock", list(stock_list.keys()))
 interval = st.selectbox("🕒 Select Interval", [
@@ -155,6 +156,15 @@ def calculate_cmf(df, period=20):
 
 df = calculate_cmf(df)
 
+# ------------------- RSI CALCULATION -------------------
+def calculate_rsi(df, period=14):
+    rsi_indicator = RSIIndicator(close=df['close'], window=period)
+    df['rsi'] = rsi_indicator.rsi()
+    return df
+
+df = calculate_rsi(df)
+
+
 # ------------------- DIVERGENCE DETECTION -------------------
 df['cmf_diff'] = df['cmf'].diff()
 df['price_diff'] = df['close'].diff()
@@ -179,6 +189,25 @@ def plot_3d_animated(df):
     ), height=750, margin=dict(l=0, r=0, b=0, t=30))
     return fig
 
+def plot_3d_rsi(df):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter3d(
+        x=df['rsi'],
+        y=df['close'],
+        z=df['cmf'],
+        mode='lines+markers',
+        marker=dict(size=5, color=df['cmf'], colorscale='Inferno', opacity=0.9),
+        line=dict(width=2, color='green'),
+        text=df['timestamp'].astype(str)
+    ))
+    fig.update_layout(scene=dict(
+        xaxis_title="RSI",
+        yaxis_title="Price",
+        zaxis_title="Money Flow (CMF)"
+    ), height=750, margin=dict(l=0, r=0, b=0, t=30))
+    return fig
+
+
 def plot_2d(df, x_col, y_col, highlight_div=False):
     color = np.where(df['divergence'], 'red', 'blue') if highlight_div else 'blue'
     fig = go.Figure(data=go.Scatter(x=df[x_col], y=df[y_col],
@@ -188,8 +217,8 @@ def plot_2d(df, x_col, y_col, highlight_div=False):
     return fig
 
 # ------------------- STREAMLIT TABS -------------------
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📈 3D Chart", "📉 Price vs CMF", "📊 Volume vs CMF", "🚨 Divergence Alerts"
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📈 3D Chart", "📉 Price vs CMF", "📊 Volume vs CMF", "🚨 Divergence Alerts", "📈 RSI vs Price vs CMF"
 ])
 
 with tab1:
@@ -204,3 +233,7 @@ with tab3:
 with tab4:
     st.write("🔴 Red points show divergence (Price & CMF moving opposite).")
     st.plotly_chart(plot_2d(df, 'timestamp', 'close', highlight_div=True), use_container_width=True)
+
+with tab5:
+    st.subheader("📈 3D Chart – RSI vs Price vs Money Flow (CMF)")
+    st.plotly_chart(plot_3d_rsi(df), use_container_width=True)
