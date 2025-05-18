@@ -5,6 +5,7 @@ import datetime as dt
 import pyotp
 from SmartApi.smartConnect import SmartConnect
 import plotly.graph_objects as go
+from ta.momentum import RSIIndicator
 
 # Config
 st.set_page_config(page_title="📈 TRIYAM", layout="wide")
