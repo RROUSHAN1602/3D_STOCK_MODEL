@@ -2274,7 +2274,7 @@ def plot_2d(df, x_col, y_col, highlight_div=False):
 
 # ------------------- STREAMLIT TABS -------------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📈 3D Chart", "📉 P vs C", "📊 V vs C", "🚨 Divergence Alerts", "📈 R vs P vs C"
+    "📈 3D Chart", "🚨 Divergence Alerts", "📈 R vs P vs C"
 ])
 
 with tab1:
