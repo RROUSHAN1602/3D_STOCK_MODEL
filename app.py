@@ -2281,10 +2281,10 @@ with tab1:
     st.plotly_chart(plot_3d_animated(df), use_container_width=True)
 
 with tab2:
-    st.plotly_chart(plot_2d(df, 'c', 'c'), use_container_width=True)
+    st.plotly_chart(plot_2d(df, 'close', 'cmf'), use_container_width=True)
 
 with tab3:
-    st.plotly_chart(plot_2d(df, 'v', 'c'), use_container_width=True)
+    st.plotly_chart(plot_2d(df, 'volume', 'cmf'), use_container_width=True)
 
 with tab4:
     st.write("🔴 Red points show divergence (P & M moving opposite).")
