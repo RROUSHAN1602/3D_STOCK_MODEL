@@ -9,7 +9,7 @@ from ta.momentum import RSIIndicator
 
 # Config
 st.set_page_config(page_title="📈 TRIYAM", layout="wide")
-st.title("📊 Advanced Stock Dashboard – Volume | Price | Money Flow")
+st.title("📊 Advanced Stock Dashboard – V | P| MF")
 
 # Angel One Login
 api_key = st.secrets["API_KEY"]
@@ -2274,7 +2274,7 @@ def plot_2d(df, x_col, y_col, highlight_div=False):
 
 # ------------------- STREAMLIT TABS -------------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📈 3D Chart", "📉 Price vs CMF", "📊 Volume vs CMF", "🚨 Divergence Alerts", "📈 RSI vs Price vs CMF"
+    "📈 3D Chart", "📉 P vs C", "📊 V vs C", "🚨 Divergence Alerts", "📈 R vs P vs C"
 ])
 
 with tab1:
@@ -2287,9 +2287,9 @@ with tab3:
     st.plotly_chart(plot_2d(df, 'volume', 'cmf'), use_container_width=True)
 
 with tab4:
-    st.write("🔴 Red points show divergence (Price & CMF moving opposite).")
+    st.write("🔴 Red points show divergence (P & M moving opposite).")
     st.plotly_chart(plot_2d(df, 'timestamp', 'close', highlight_div=True), use_container_width=True)
 
 with tab5:
-    st.subheader("📈 3D Chart – RSI vs Price vs Money Flow (CMF)")
+    st.subheader("📈 3D Chart – R vs P vs M")
     st.plotly_chart(plot_3d_rsi(df), use_container_width=True)
