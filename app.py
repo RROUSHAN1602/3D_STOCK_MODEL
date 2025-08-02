@@ -2239,9 +2239,9 @@ def plot_3d_animated(df):
         text=df['timestamp'].astype(str)
     ))
     fig.update_layout(scene=dict(
-        xaxis_title="Volume",
-        yaxis_title="Price",
-        zaxis_title="Money Flow (CMF)"
+        xaxis_title="V",
+        yaxis_title="P",
+        zaxis_title="C"
     ), height=750, margin=dict(l=0, r=0, b=0, t=30))
     return fig
 
@@ -2257,9 +2257,9 @@ def plot_3d_rsi(df):
         text=df['timestamp'].astype(str)
     ))
     fig.update_layout(scene=dict(
-        xaxis_title="RSI",
-        yaxis_title="Price",
-        zaxis_title="Money Flow (CMF)"
+        xaxis_title="R",
+        yaxis_title="P",
+        zaxis_title="C"
     ), height=750, margin=dict(l=0, r=0, b=0, t=30))
     return fig
 
