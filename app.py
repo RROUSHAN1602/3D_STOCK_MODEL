@@ -2280,12 +2280,6 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.plotly_chart(plot_3d_animated(df), use_container_width=True)
 
-with tab2:
-    st.plotly_chart(plot_2d(df, 'close', 'cmf'), use_container_width=True)
-
-with tab3:
-    st.plotly_chart(plot_2d(df, 'volume', 'cmf'), use_container_width=True)
-
 with tab4:
     st.write("🔴 Red points show divergence (P & M moving opposite).")
     st.plotly_chart(plot_2d(df, 'timestamp', 'close', highlight_div=True), use_container_width=True)
